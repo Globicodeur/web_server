@@ -1,5 +1,7 @@
 #pragma once
 
+#include "status.hpp"
+
 namespace http {
 
     static const int version_major = 1;
@@ -8,24 +10,33 @@ namespace http {
     static const std::string version = "HTTP/" + std::to_string(version_major) +
                                        "." + std::to_string(version_minor);
 
-    enum code { ok = 200, not_found = 404 };
-
-    static std::unordered_map<int, std::string> code_strings = {
-        { ok, "OK" },
-        { not_found, "Not Found" },
-    };
-
     struct response {
 
-        response(const std::string &, code=ok);
+        response(const std::string & content, const status & stat = ok):
+            buff_ { new asio::streambuf },
+            content_ { new std::ostringstream },
+            status_ { stat } {
+                *content_ << content;
 
-        asio::streambuf & buff() const;
+        }
+
+        void build() const {
+            std::ostream os { &(*buff_) };
+            os << version << " "
+               << status_ << CRLF
+               << "Content-Length: " << content_->tellp() << CRLF << CRLF
+               << content_->str();
+        }
+
+        asio::streambuf & buff() const {
+            return *buff_;
+        }
 
     private:
 
         std::shared_ptr<asio::streambuf> buff_;
-        std::shared_ptr<std::ostream> stream_;
-        code code_;
+        std::shared_ptr<std::ostringstream> content_;
+        std::reference_wrapper<const status> status_;
 
     };
 
