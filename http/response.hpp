@@ -12,30 +12,49 @@ namespace http {
 
     struct response {
 
-        response(const std::string & content, const status & stat = ok):
-            buff_ { new asio::streambuf },
-            content_ { new std::ostringstream },
-            status_ { stat } {
-                *content_ << content;
+        using buffers = std::vector<asio::streambuf::const_buffers_type>;
 
+        response(const status & status = ok):
+            header_ { new asio::streambuf },
+            content_ { new asio::streambuf },
+            status_ { status } { }
+
+        response(const std::string & content, const status & status = ok):
+            response { status } {
+            *this << content;
         }
+
+        response(const response &) = delete;
+        response & operator=(const response &) = delete;
 
         void build() const {
-            std::ostream os { &(*buff_) };
-            os << version << " "
-               << status_ << CRLF
-               << "Content-Length: " << content_->tellp() << CRLF << CRLF
-               << content_->str();
+            std::ostream os { &(*header_) };
+            os << version << " " << status_ << CRLF
+               << "Content-Length: " << content_->size() << CRLF << CRLF;
         }
 
-        asio::streambuf & buff() const {
-            return *buff_;
+        const buffers buff() const {
+            return {
+                header_->data(),
+                content_->data()
+            };
+        }
+
+        template <class T>
+        response & operator<<(const T & content) {
+            std::ostream os { &(*content_) };
+            os << content;
+            return *this;
+        }
+
+        response & operator<<(const status & status) {
+            status_ = status;
+            return *this;
         }
 
     private:
 
-        std::shared_ptr<asio::streambuf> buff_;
-        std::shared_ptr<std::ostringstream> content_;
+        std::shared_ptr<asio::streambuf> header_, content_;
         std::reference_wrapper<const status> status_;
 
     };
