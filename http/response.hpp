@@ -32,8 +32,8 @@ namespace http {
             *this << content_length[content_->size()];
             std::ostream os { &(*header_) };
             os << version << " " << status_ << CRLF;
-            for (auto it = headers_.begin(); it != headers_.end(); ++it)
-                os << it->name << ":" << it->value << CRLF;
+            for (const auto & header: headers_)
+                os << header << CRLF;
             os << CRLF;
         }
 
