@@ -116,13 +116,12 @@ namespace http {
             asio::async_write(conn->socket, conn->resp.buff(), on_written);
         }
 
-        void on_written(shared_connection_t conn, const err_code_t & code,
+        void on_written(shared_connection_t, const err_code_t & code,
                         size_t transferred) {
             if (!code)
                std::cout << "written " << transferred << " bytes" << std::endl;
             else
                 std::cerr << "write: " << code << std::endl;
-            conn->socket.shutdown(asio::ip::tcp::socket::shutdown_both);
         }
 
         boost::optional<route_handler> find_route(asio::streambuf & buff) {
