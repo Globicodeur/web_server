@@ -1,6 +1,18 @@
 #include "http/server.hpp"
 #include "edsl/edsl.hpp"
 
+std::string reversed(std::string str)
+{
+    std::reverse(str.begin(), str.end());
+    return str;
+}
+
+template <class F, class... Args>
+auto lazy(const F & f, const Args &... args)
+{
+    return proto::make_expr<proto::tag::function>(f, args...);
+}
+
 int main()
 {
     using qi::lit;
@@ -23,9 +35,10 @@ int main()
         ,
         // action
         _response
+            <<  content_type [ "text/html" ]
             <<  h1 [ _1 * _1 ]
             <<  h2 [ _2 - 4.2 ]
-            <<  h4 [ _3 + " == " + _3 ]
+            <<  h4 [ lazy(reversed, _3) ]
     );
 
     server.serve();

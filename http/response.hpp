@@ -1,6 +1,7 @@
 #pragma once
 
 #include "status.hpp"
+#include "header.hpp"
 
 namespace http {
 
@@ -27,10 +28,13 @@ namespace http {
         response(const response &) = delete;
         response & operator=(const response &) = delete;
 
-        void build() const {
+        void build() {
+            *this << content_length[content_->size()];
             std::ostream os { &(*header_) };
-            os << version << " " << status_ << CRLF
-               << "Content-Length: " << content_->size() << CRLF << CRLF;
+            os << version << " " << status_ << CRLF;
+            for (auto it = headers_.begin(); it != headers_.end(); ++it)
+                os << it->name << ":" << it->value << CRLF;
+            os << CRLF;
         }
 
         const buffers buff() const {
@@ -52,10 +56,16 @@ namespace http {
             return *this;
         }
 
+        response & operator<<(const header & header) {
+            headers_.insert(header);
+            return *this;
+        }
+
     private:
 
         std::shared_ptr<asio::streambuf> header_, content_;
         std::reference_wrapper<const status> status_;
+        std::unordered_set<header, header::hash> headers_;
 
     };
 

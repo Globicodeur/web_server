@@ -1,5 +1,6 @@
 // STL
 #include <thread>
+#include <unordered_set>
 
 // Boost specific
 #include <boost/asio.hpp>
