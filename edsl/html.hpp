@@ -62,16 +62,17 @@ namespace html {
     };
 
     static constexpr char H1[] = "h1";
-    const html_handler<proto::terminal<tag_placeholder<H1>>::type> h1;
     static constexpr char H2[] = "h2";
-    const html_handler<proto::terminal<tag_placeholder<H2>>::type> h2;
     static constexpr char H3[] = "h3";
-    const html_handler<proto::terminal<tag_placeholder<H3>>::type> h3;
     static constexpr char H4[] = "h4";
-    const html_handler<proto::terminal<tag_placeholder<H4>>::type> h4;
     static constexpr char H5[] = "h5";
-    const html_handler<proto::terminal<tag_placeholder<H5>>::type> h5;
     static constexpr char H6[] = "h6";
+
+    const html_handler<proto::terminal<tag_placeholder<H1>>::type> h1;
+    const html_handler<proto::terminal<tag_placeholder<H2>>::type> h2;
+    const html_handler<proto::terminal<tag_placeholder<H3>>::type> h3;
+    const html_handler<proto::terminal<tag_placeholder<H4>>::type> h4;
+    const html_handler<proto::terminal<tag_placeholder<H5>>::type> h5;
     const html_handler<proto::terminal<tag_placeholder<H6>>::type> h6;
 
 }
