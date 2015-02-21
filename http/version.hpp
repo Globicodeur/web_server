@@ -4,8 +4,8 @@ namespace http {
 
     struct version {
 
-        const uint major;
-        const uint minor;
+        uint major;
+        uint minor;
 
         friend std::ostream & operator<<(std::ostream & os, const version & v) {
             return os << "HTTP/" << v.major << '.' << v.minor;
@@ -14,3 +14,9 @@ namespace http {
     };
 
 }
+
+BOOST_FUSION_ADAPT_STRUCT(
+    http::version,
+    (uint, major)
+    (uint, minor)
+)
