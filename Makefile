@@ -8,11 +8,11 @@ BOOST_DIR		=	~/.brew/Cellar/boost/1.57.0/include/
 BOOST_LIB_DIR	=	~/.brew/Cellar/boost/1.57.0/lib
 CFLAGS			=	-Wall -Wextra -Werror -std=c++1y -O3 -c\
 					-I $(BOOST_DIR) -I .
-LFLAGS			=	-flto -L $(BOOST_LIB_DIR) -lboost_system -o
+LFLAGS			=	-L $(BOOST_LIB_DIR) -lboost_system -o
 
 PCH				=	stdafx.hpp
 PCH_SUFFIX		=	.gch
-PCH_DIR			=	$(OBJ_DIR)/pch
+PCH_DIR			=	/tmp/pch_$(NAME)
 PCH_TARGET		=	$(PCH_DIR)$(PCH_SUFFIX)/pch
 PCH_FLAG		=	-include $(PCH_DIR)
 
@@ -43,9 +43,19 @@ $(OBJ_DIR)/%.o: %.cpp $(PCH_TARGET)
 	@echo "compiling $(notdir $<)"
 	@$(COMPILER) $(CFLAGS) $(PCH_FLAG) $< -o $@
 
+depend: .depend
+
+.depend: $(SRC)
+	@echo "building dependencies"
+	@rm -f ./.depend
+	@$(foreach src, $^, $(COMPILER) $(CFLAGS) -MM -MT $(OBJ_DIR)/./$(src:.cpp=.o) $(src) >> ./.depend;)
+
+-include .depend
+
 clean:
 	@echo "cleaning objects"
 	@rm -rf $(OBJ_DIR)
+	@rm -f ./.depend
 
 fclean: clean
 	@echo "cleaning $(NAME)"
