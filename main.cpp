@@ -42,8 +42,20 @@ int main()
     );
 
     server.add_route(
+        lit("/get"),
+        [](response & resp, const request & req, const auto &) {
+            for (const auto & pair: req.params())
+                resp << tag<H1>{} [ pair.first + " : " + pair.second ];
+            for (const auto & header: req.headers())
+                resp << tag<H1>{} [ header ];
+        }
+    );
+
+    server.add_route(
         lit("/post"),
-        _response << h1["ok"],
+        [](response & resp, const request & req, const auto &) {
+            resp << tag<H1>{} [ asio::buffer_cast<const unsigned char *>(req.body().data()) ];
+        },
         post
     );
 

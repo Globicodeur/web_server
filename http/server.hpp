@@ -1,5 +1,6 @@
 #pragma once
 
+#include "request.hpp"
 #include "response.hpp"
 #include "method.hpp"
 
@@ -24,7 +25,8 @@ namespace http {
             using R = typename tools::traits::attribute_of_parser<Expr>::type;
             auto call = [f](const R & t) {
                 using std::placeholders::_1;
-                return std::bind(f, _1, t);
+                using std::placeholders::_2;
+                return std::bind(f, _1, _2, t);
             };
             qi::rule<spirit::istream_iterator, R()> sub_expr = e;
             add_route(
@@ -53,12 +55,13 @@ namespace http {
 
     private:
 
-        using route_handler = std::function<void (response &)>;
+        using route_handler = std::function<void (response &, const request &)>;
         using route_rule = qi::rule<
             spirit::istream_iterator
           , route_handler()
           , qi::blank_type
         >;
+        using route_t = std::pair<route_handler, request>;
 
         void add_route(const route_rule & rule) {
             routes_ = routes_.copy() | rule.copy();
@@ -105,9 +108,9 @@ namespace http {
 
         void on_read(shared_connection_t conn, const err_code_t & code, size_t) {
             if (!code) {
-                auto handler = find_route(conn->buff);
-                if (handler)
-                    (*handler)(conn->resp);
+                auto route = find_route(conn->buff);
+                if (route)
+                    (route->first)(conn->resp, route->second);
                 else
                     conn->resp << not_found;
                 write_response(conn);
@@ -133,7 +136,9 @@ namespace http {
                 std::cerr << "write: " << code << std::endl;
         }
 
-        boost::optional<route_handler> find_route(asio::streambuf & buff) {
+        boost::optional<route_t> find_route(asio::streambuf & buff) {
+            static request::grammar request_rule;
+
             std::istream stream { &buff };
             spirit::istream_iterator first { stream };
             spirit::istream_iterator last;
@@ -141,7 +146,10 @@ namespace http {
 
             stream.unsetf(std::ios::skipws);
             if (qi::phrase_parse(first, last, routes_, qi::blank, handler)) {
-                return handler;
+                request request { buff };
+                if (qi::phrase_parse(first, last, request_rule, qi::blank, request)) {
+                    return route_t { handler, request };
+                }
             }
             return boost::none;
         }

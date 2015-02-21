@@ -16,12 +16,17 @@ namespace http {
             using type = typename std::result_of<Call>::type;
         };
 
-        handler_context(response & response, const Args &... args):
-            response_ { response }, args_ { args... }
+        handler_context(response & response, const request & request,
+                        const Args &... args):
+            response_ { response }, request_(request), args_ { args... }
         { }
 
         response & operator()(proto::tag::terminal, response_placeholder) {
             return response_;
+        }
+
+        const request & operator()(proto::tag::terminal, request_placeholder) const {
+            return request_;
         }
 
         template <size_t i>
@@ -44,6 +49,7 @@ namespace http {
     private:
 
         response & response_;
+        const request & request_;
         args_t args_;
 
    };
@@ -52,20 +58,22 @@ namespace http {
         class NotAVector,
         std::enable_if_t<!tools::traits::is_fusion_vector<NotAVector>::value>...
     >
-    inline auto make_context(response & response, const NotAVector & value) {
-        return handler_context<NotAVector> { response, value };
+    inline auto make_context(response & response, const request & request,
+                             const NotAVector & value) {
+        return handler_context<NotAVector> { response, request, value };
     }
 
     template <
         class Vector,
         std::enable_if_t<tools::traits::is_fusion_vector<Vector>::value>...
     >
-    inline auto make_context(response & response, const Vector & vector) {
-        return make_context_impl(response, vector);
+    inline auto make_context(response & response, const request & request,
+                             const Vector & vector) {
+        return make_context_impl(response, request, vector);
     }
 
     template <template <class...> class Vector, class... Args>
-    inline auto make_context_impl(response & response,
+    inline auto make_context_impl(response & response, const request & request,
                                   const Vector<Args...> & vector) {
         using sequence_t = tools::traits::make_range_index_sequence<
             0,
@@ -73,16 +81,17 @@ namespace http {
         >;
         constexpr sequence_t sequence;
 
-        return make_context_impl(response, vector, sequence);
+        return make_context_impl(response, request, vector, sequence);
     }
 
     template <template <class...> class Vector, class... Args, size_t... indexes>
-    inline auto make_context_impl(response & response,
+    inline auto make_context_impl(response & response, const request & request,
                                   const Vector<Args...> & vector,
                                   std::index_sequence<indexes...>)
     {
         return handler_context<Args...> {
             response,
+            request,
             fusion::at_c<indexes>(vector)...
         };
     }

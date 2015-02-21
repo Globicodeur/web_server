@@ -1,6 +1,7 @@
 // STL
 #include <thread>
 #include <unordered_set>
+#include <unordered_map>
 
 // Boost specific
 #include <boost/asio.hpp>
@@ -10,6 +11,8 @@ namespace asio = boost::asio;
 #include <boost/spirit/include/support_istream_iterator.hpp>
 namespace qi = boost::spirit::qi;
 namespace spirit = boost::spirit;
+
+#include <boost/fusion/include/std_pair.hpp>
 
 #include <boost/spirit/include/phoenix.hpp>
 namespace phoenix = boost::phoenix;
