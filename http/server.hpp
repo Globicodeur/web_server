@@ -1,6 +1,7 @@
 #pragma once
 
 #include "response.hpp"
+#include "method.hpp"
 
 #include "tools/traits.hpp"
 
@@ -18,14 +19,18 @@ namespace http {
         { }
 
         template <class Expr, class F>
-        void add_route(const Expr & e, const F & f) {
+        void add_route(const Expr & e, const F & f,
+                       const method & method = get) {
             using R = typename tools::traits::attribute_of_parser<Expr>::type;
             auto call = [f](const R & t) {
                 using std::placeholders::_1;
                 return std::bind(f, _1, t);
             };
             qi::rule<spirit::istream_iterator, R()> sub_expr = e;
-            add_route(sub_expr.copy()[qi::_val = phoenix::bind(call, qi::_1)]);
+            add_route(
+                    qi::lit(method.name)
+                >>  sub_expr.copy()[qi::_val = phoenix::bind(call, qi::_1)]
+            );
         }
 
         void serve() {
@@ -49,7 +54,11 @@ namespace http {
     private:
 
         using route_handler = std::function<void (response &)>;
-        using route_rule = qi::rule<spirit::istream_iterator, route_handler()>;
+        using route_rule = qi::rule<
+            spirit::istream_iterator
+          , route_handler()
+          , qi::blank_type
+        >;
 
         void add_route(const route_rule & rule) {
             routes_ = routes_.copy() | rule.copy();
@@ -119,7 +128,7 @@ namespace http {
         void on_written(shared_connection_t, const err_code_t & code,
                         size_t transferred) {
             if (!code)
-               std::cout << "written " << transferred << " bytes" << std::endl;
+                std::cout << "written " << transferred << " bytes" << std::endl;
             else
                 std::cerr << "write: " << code << std::endl;
         }
@@ -131,8 +140,9 @@ namespace http {
             route_handler handler;
 
             stream.unsetf(std::ios::skipws);
-            if (qi::parse(first, last, qi::lit("GET ") >> routes_, handler))
+            if (qi::phrase_parse(first, last, routes_, qi::blank, handler)) {
                 return handler;
+            }
             return boost::none;
         }
 

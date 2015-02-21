@@ -41,6 +41,12 @@ int main()
             <<  h4 [ lazy(reversed, _3) ]
     );
 
+    server.add_route(
+        lit("/post"),
+        _response << h1["ok"],
+        post
+    );
+
     server.serve();
 
     return 0;
