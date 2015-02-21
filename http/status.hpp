@@ -25,8 +25,8 @@ namespace http {
 
     // defining the standard statuses here
     // users should never have to define new ones themselves
-    static status ok        { status::code::ok,        "OK"        };
-    static status not_found { status::code::not_found, "Not Found" };
+    static const status ok        { status::code::ok,        "OK"        };
+    static const status not_found { status::code::not_found, "Not Found" };
     // ...
 
 }
