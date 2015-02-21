@@ -2,14 +2,9 @@
 
 #include "status.hpp"
 #include "header.hpp"
+#include "version.hpp"
 
 namespace http {
-
-    static const int version_major = 1;
-    static const int version_minor = 1;
-
-    static const std::string version = "HTTP/" + std::to_string(version_major) +
-                                       "." + std::to_string(version_minor);
 
     struct response {
 
@@ -29,6 +24,8 @@ namespace http {
         response & operator=(const response &) = delete;
 
         void build() {
+            static const version version { 1, 1 };
+
             *this << content_length[content_->size()];
             std::ostream os { &(*header_) };
             os << version << " " << status_ << CRLF;
