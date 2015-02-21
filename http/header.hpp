@@ -7,7 +7,8 @@ namespace http {
         struct hash {
 
             auto operator()(const header & header) const {
-                return std::hash<std::string>{}(header.name);
+                static const std::hash<std::string> hasher;
+                return hasher(header.name);
             }
 
         };
