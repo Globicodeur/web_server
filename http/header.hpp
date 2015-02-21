@@ -14,6 +14,9 @@ namespace http {
         };
 
         header(const std::string & name): name(name) {}
+        header(const std::string & name, const std::string & value):
+            name(name), value(value)
+        { }
 
         template <class T>
         header(const std::string & name, const T & t):
