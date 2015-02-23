@@ -10,39 +10,48 @@ namespace http {
         using parameters_t = std::unordered_map<std::string, std::string>;
         using headers_t = std::unordered_set<header, header::hash>;
 
-        request(asio::streambuf & buff): body_(buff) {}
-
         struct grammar:
             qi::grammar<spirit::istream_iterator, request(), qi::blank_type> {
 
             grammar(): grammar::base_type(rule) {
-
+                using qi::char_;
+                using qi::lit;
+                using qi::uint_;
+                using qi::lexeme;
+                using qi::omit;
+                using qi::as_string;
                 using qi::_val;
                 using qi::_1;
                 using qi::_2;
 
-                key = qi::lexeme[+qi::char_("a-zA-Z-")];
-                pair_rule = key >> '=' >> key;
-                params_rule = qi::omit[qi::char_('?')] >> pair_rule % '&';
+                using phoenix::insert;
+                using phoenix::construct;
+                using phoenix::bind;
 
-                version_rule = qi::lit("HTTP/") >> qi::uint_ >> '.' >> qi::uint_;
+                key = lexeme[+char_("a-zA-Z-")];
+                pair_rule = key >> '=' >> key;
+                params_rule = omit[char_('?')] >> pair_rule % '&';
+
+                version_rule = lit("HTTP/") >> uint_ >> '.' >> uint_;
 
                 headers_rule =
                     *(
                         (
                                 key
                             >>  ": "
-                            >> qi::as_string[+(qi::char_ - '\r')]
+                            >> as_string[+(char_ - '\r')]
                             >> CRLF
-                        )[phoenix::insert(_val, phoenix::construct<header>(_1, _2))]
+                        )[insert(_val, construct<header>(_1, _2))]
                     );
 
                 rule =
-                        -params_rule[phoenix::bind(&request::params_, _val) = _1]
-                    >>  version_rule[phoenix::bind(&request::version_, _val) = _1]
+                        -params_rule[bind(&request::params_, _val) = _1]
+                    >>  version_rule[bind(&request::version_, _val) = _1]
                     >>  CRLF
-                    >>  headers_rule[phoenix::bind(&request::headers_, _val) = _1]
-                    >>  CRLF;
+                    >>  headers_rule[bind(&request::headers_, _val) = _1]
+                    >>  CRLF
+                    >>  as_string[*char_][bind(&request::body_, _val) = _1]
+                    ;
 
             }
 
@@ -66,7 +75,7 @@ namespace http {
             return headers_;
         }
 
-        const asio::streambuf & body() const {
+        const auto & body() const {
             return body_;
         }
 
@@ -75,7 +84,7 @@ namespace http {
         headers_t headers_;
         parameters_t params_;
         version version_;
-        asio::streambuf & body_;
+        std::string body_;
 
     };
 

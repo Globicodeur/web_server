@@ -146,7 +146,7 @@ namespace http {
 
             stream.unsetf(std::ios::skipws);
             if (qi::phrase_parse(first, last, routes_, qi::blank, handler)) {
-                request request { buff };
+                request request;
                 if (qi::phrase_parse(first, last, request_rule, qi::blank, request)) {
                     return route_t { handler, request };
                 }

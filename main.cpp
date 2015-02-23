@@ -54,7 +54,7 @@ int main()
     server.add_route(
         lit("/post"),
         [](response & resp, const request & req, const auto &) {
-            resp << tag<H1>{} [ asio::buffer_cast<const unsigned char *>(req.body().data()) ];
+            resp << tag<H1>{} [ req.body() ];
         },
         post
     );
